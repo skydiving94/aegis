@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "description", "task_type", "inputs", "outputs"],
+  "properties": {
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "task_type": {"enum": ["python", "llm"]},
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "io_type"],
+        "properties": {
+          "name": {"type": "string"},
+          "io_type": {"enum": ["string", "int", "float", "bool", "dict", "list", "file_path"]},
+          "description": {"type": "string"},
+          "max_chars": {"type": "integer"}
+        }
+      }
+    },
+    "outputs": {"$ref": "#/properties/inputs"},
+    "preconditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type": {"enum": ["input_format", "output_format", "language", "platform", "requires_approval", "custom"]},
+          "value": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "toolkit_refs": {"type": "array", "items": {"type": "string"}},
+    "risk_level": {"enum": ["low", "medium", "high", "critical"], "default": "low"},
+    "code": {"type": "string"},
+    "test_code": {"type": "string"},
+    "prompt_template": {"type": "string"},
+    "system_instruction": {"type": "string"},
+    "context_budget": {"type": "integer", "default": 32000},
+    "max_retries": {"type": "integer", "default": 10},
+    "version": {"type": "integer", "default": 1},
+    "tags": {"type": "array", "items": {"type": "string"}}
+  },
+  "if": {"properties": {"task_type": {"const": "python"}}},
+  "then": {"required": ["code", "test_code"]},
+  "else": {"required": ["prompt_template"]}
+}

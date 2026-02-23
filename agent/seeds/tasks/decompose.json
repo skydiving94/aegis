@@ -1,0 +1,25 @@
+{
+  "id": "decompose",
+  "name": "decompose",
+  "description": "Breaks a user goal into the minimum number of sub-objectives. Each sub-objective becomes ONE complete skill.",
+  "task_type": "llm",
+  "inputs": [
+    {"name": "goal", "io_type": "string", "description": "High-level goal from intent"},
+    {"name": "entities", "io_type": "list", "description": "Key entities"},
+    {"name": "constraints", "io_type": "list", "description": "Constraints"},
+    {"name": "domain", "io_type": "string", "description": "Domain category"},
+    {"name": "past_objectives", "io_type": "list", "description": "Previously solved similar objectives"}
+  ],
+  "outputs": [
+    {"name": "sub_objectives", "io_type": "list", "description": "List of sub-objectives (usually just 1)"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "prompt_template": "You are a task planner. Given a user goal, decide how to fulfill it.\n\nCRITICAL RULES:\n1. For MOST goals, create exactly ONE sub-objective that describes the ENTIRE end-to-end workflow.\n2. The sub-objective MUST BE GENERIC AND REUSABLE. NEVER hardcode specific entities (like \"27519\", \"AAPL\", or \"Cary\") into the description.\n   - WRONG: \"Fetch weather data for location 27519\"\n   - CORRECT: \"Fetch current weather data for the requested location from an external API and format it\"\n   - WRONG: \"Get stock price for AAPL\"\n   - CORRECT: \"Fetch today's stock price for the requested stock symbol from a financial API\"\n3. By keeping descriptions generic, the agent can reuse the exact same skill for \"Weather in Cary\" and \"Weather in 27519\".\n4. If a past generic objective matches, mark it for reuse.\n\nUSER GOAL: {{ goal | default('unspecified', true) }}\n\nENTITIES: {{ entities | default([], true) | tojson }}\nCONSTRAINTS: {{ constraints | default([], true) | tojson }}\nDOMAIN: {{ domain | default('general', true) }}\n\nPAST SOLUTIONS:\n{% for past in past_objectives | default([], true) %}\n- objective: \"{{ past.description | default(past.objective | default('')) }}\"\n  skill_id: {{ past.skill_id | default('none') }}\n  tags: {{ past.tags | default([]) | tojson }}\n{% endfor %}\n{% if not past_objectives %}\n(No past solutions found.)\n{% endif %}\n\nRespond in this exact JSON format:\n{\n  \"sub_objectives\": [\n    {\n      \"description\": \"A generic, REUSABLE description of what this sub-objective should achieve end-to-end. DO NOT INCLUDE SPECIFIC VALUES (no cities, no tickers, etc.).\",\n      \"reuse_skill_id\": \"skill_id or null\",\n      \"inputs\": [{\"name\": \"user_input\", \"io_type\": \"string\", \"description\": \"The raw user string to extract parameters from\"}],\n      \"outputs\": [{\"name\": \"...\", \"io_type\": \"string\", \"description\": \"...\"}],\n      \"domain_tags\": [\"...\"]\n    }\n  ]\n}",
+  "system_instruction": "You are a task planner. Create the MINIMUM number of sub-objectives (usually just 1). Sub-objectives MUST BE GENERIC AND REUSABLE, with NO hardcoded entities (e.g. use 'the requested location', not 'New York'). Always respond with valid JSON only.",
+  "context_budget": 16000,
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "decompose", "planning"]
+}

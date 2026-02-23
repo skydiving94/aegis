@@ -1,0 +1,22 @@
+{
+  "id": "generate_module",
+  "name": "generate_module",
+  "description": "Generates the complete Python module code for a toolkit based on its specification.",
+  "task_type": "llm",
+  "inputs": [
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Toolkit specification from analyze_need"}
+  ],
+  "outputs": [
+    {"name": "module_code", "io_type": "string", "description": "Complete Python module source code"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Passthrough toolkit spec"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "prompt_template": "Generate a complete Python module for this toolkit.\n\nTOOLKIT SPEC: {{ toolkit_spec | tojson }}\n\nRULES:\n1. Follow PEP8 strictly\n2. Include docstrings for all public classes/functions\n3. Include type hints for all parameters and returns\n4. Handle errors gracefully with specific exceptions\n5. If requires_approval is true, all FS/network operations must\n   call approval_gate.request_approval(action, detail) first\n6. Dependencies: {{ toolkit_spec.dependencies | tojson if toolkit_spec.dependencies else '[]' }}\n7. The module should be self-contained and importable\n\nReturn ONLY the Python module code, no explanations.",
+  "system_instruction": "You are an expert Python developer. Generate clean, production-quality Python modules. Return only valid Python code.",
+  "context_budget": 32000,
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "toolkit_building", "code_generation"]
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "description", "nodes", "edges"],
+  "properties": {
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "task_definition_id"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "task_definition_id": {"type": "string"},
+          "config_overrides": {"type": "object"}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_node_id", "target_node_id", "output_mapping"],
+        "properties": {
+          "source_node_id": {"type": "string"},
+          "target_node_id": {"type": "string"},
+          "output_mapping": {"type": "object"},
+          "data_policy": {"enum": ["pass_through", "summarize", "reference", "truncate"], "default": "pass_through"},
+          "max_chars": {"type": "integer"}
+        }
+      }
+    },
+    "is_meta": {"type": "boolean", "default": false},
+    "version": {"type": "integer", "default": 1}
+  }
+}

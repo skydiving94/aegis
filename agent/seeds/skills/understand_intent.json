@@ -1,0 +1,12 @@
+{
+  "id": "understand_intent",
+  "name": "understand_intent",
+  "description": "Parses raw user input into a structured intent object with goal, entities, constraints, and domain.",
+  "tags": ["meta", "intent"],
+  "is_meta": true,
+  "nodes": [
+    {"node_id": "parse_intent", "task_definition_id": "parse_intent"}
+  ],
+  "edges": [],
+  "version": 1
+}

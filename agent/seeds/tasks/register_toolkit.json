@@ -1,0 +1,25 @@
+{
+  "id": "register_toolkit",
+  "name": "register_toolkit",
+  "description": "Writes the toolkit module to agent/custom_toolkits/ and persists its metadata to the database.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "module_code", "io_type": "string", "description": "Validated and tested module code"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Toolkit specification"},
+    {"name": "test_passed", "io_type": "bool", "description": "Whether smoke test passed"}
+  ],
+  "outputs": [
+    {"name": "success", "io_type": "bool", "description": "Whether registration succeeded"},
+    {"name": "toolkit_id", "io_type": "string", "description": "ID of the registered toolkit"}
+  ],
+  "preconditions": [
+    {"type": "requires_approval", "value": "file_write", "description": "Writes toolkit file to disk"}
+  ],
+  "toolkit_refs": ["db_access"],
+  "risk_level": "high",
+  "code": "import os\nimport json\n\ndef execute(inputs):\n    \"\"\"Write toolkit module to custom_toolkits/ and register.\"\"\"\n    module_code = inputs.get('module_code', '')\n    toolkit_spec = inputs.get('toolkit_spec', {})\n    if isinstance(toolkit_spec, str):\n        toolkit_spec = json.loads(toolkit_spec)\n    test_passed = inputs.get('test_passed', False)\n    \n    if not test_passed:\n        return {'success': False, 'toolkit_id': ''}\n    \n    module_name = toolkit_spec.get('name', 'unnamed').lower().replace(' ', '_')\n    \n    # Write to code tree\n    path = f'agent/custom_toolkits/{module_name}.py'\n    os.makedirs(os.path.dirname(path), exist_ok=True)\n    with open(path, 'w') as f:\n        f.write(module_code)\n    \n    # Persist metadata to DB\n    from db_access import save_toolkit\n    save_toolkit({\n        'id': module_name,\n        'name': toolkit_spec.get('name', module_name),\n        'description': toolkit_spec.get('description', ''),\n        'module_path': os.path.abspath(path),\n        'public_api': toolkit_spec.get('public_api', []),\n        'dependencies': toolkit_spec.get('dependencies', []),\n        'requires_approval': toolkit_spec.get('requires_approval', False)\n    })\n    return {'success': True, 'toolkit_id': module_name}\n\noutputs = execute(inputs)",
+  "test_code": "def test_register_skipped():\n    result = execute({'module_code': '', 'toolkit_spec': {}, 'test_passed': False})\n    assert result['success'] is False",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "toolkit_building", "registration"]
+}

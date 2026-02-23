@@ -1,0 +1,24 @@
+{
+  "id": "analyze_need",
+  "name": "analyze_need",
+  "description": "Determines what a new toolkit should contain based on task requirements and missing capabilities.",
+  "task_type": "llm",
+  "inputs": [
+    {"name": "task_description", "io_type": "string", "description": "Description of the task needing the toolkit"},
+    {"name": "missing_capability", "io_type": "string", "description": "What capability is missing"},
+    {"name": "existing_toolkits", "io_type": "list", "description": "Already available toolkits"},
+    {"name": "toolkit_name", "io_type": "string", "description": "Suggested name for the toolkit"}
+  ],
+  "outputs": [
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Complete toolkit specification"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "prompt_template": "A task requires capabilities not available in existing toolkits.\n\nTASK DESCRIPTION: {{ task_description }}\nMISSING CAPABILITY: {{ missing_capability }}\nSUGGESTED NAME: {{ toolkit_name }}\n\nEXISTING TOOLKITS:\n{% for tk in existing_toolkits %}\n- {{ tk.name }}: {{ tk.description }}\n{% endfor %}\n{% if not existing_toolkits %}(No existing toolkits.){% endif %}\n\nDesign a new toolkit module. A toolkit is a Python module containing\nclasses and functions that provide reusable capabilities. Examples:\n- A PDF parsing library with classes for reading, extracting text/tables\n- A web access library with functions for fetching URLs, parsing HTML\n- A markdown writer library for structured document generation\n\nRespond in this exact JSON:\n{\n  \"name\": \"...\",\n  \"description\": \"...\",\n  \"dependencies\": [\"pip_package_1\"],\n  \"requires_approval\": true,\n  \"public_api\": [\n    {\"name\": \"ClassName.method_name\", \"description\": \"...\",\n     \"params\": \"...\", \"returns\": \"...\"}\n  ]\n}",
+  "system_instruction": "You are a toolkit designer. Design minimal, focused Python modules. Always respond with valid JSON only. Set requires_approval to true for any toolkit that does file I/O or network access.",
+  "context_budget": 16000,
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "toolkit_building"]
+}

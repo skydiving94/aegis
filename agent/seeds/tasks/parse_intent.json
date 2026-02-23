@@ -1,0 +1,25 @@
+{
+  "id": "parse_intent",
+  "name": "parse_intent",
+  "description": "Extracts structured intent from raw user text using an LLM.",
+  "task_type": "llm",
+  "inputs": [
+    {"name": "user_input", "io_type": "string", "description": "Raw user request text"}
+  ],
+  "outputs": [
+    {"name": "intent_type", "io_type": "string", "description": "Either NEW_GOAL or FEEDBACK"},
+    {"name": "goal", "io_type": "string", "description": "High-level goal description or the feedback/complaint"},
+    {"name": "entities", "io_type": "list", "description": "Key entities mentioned"},
+    {"name": "constraints", "io_type": "list", "description": "Requirements or constraints"},
+    {"name": "domain", "io_type": "string", "description": "Domain category (e.g. finance/tax)"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "prompt_template": "You are an intent parser. Given raw user input, extract a structured intent.\n\nFirst, determine the intent_type:\n- NEW_GOAL: The user is asking to do something new (e.g., 'What is the weather?', 'Find a recipe for pork', 'Stock price of AAPL')\n- FEEDBACK: The user is complaining about the LAST thing you did, or asking you to fix/change an error from the last execution. (e.g., 'That API failed', 'Recipe not found, generate one instead', 'Use simulated data', 'That didn't work')\n\nUSER INPUT: {{ user_input | default('', true) }}\n\nRespond in this exact JSON:\n{\n  \"intent_type\": \"NEW_GOAL or FEEDBACK\",\n  \"goal\": \"high-level goal description OR the feedback/complaint description\",\n  \"entities\": [\"key entities mentioned\"],\n  \"constraints\": [\"any constraints or requirements\"],\n  \"domain\": \"domain category (e.g. finance, data, web)\"\n}",
+  "system_instruction": "You are a precise intent parser. Classify inputs as NEW_GOAL or FEEDBACK. Always respond with valid JSON only.",
+  "context_budget": 8000,
+  "max_retries": 3,
+  "version": 2,
+  "tags": ["meta", "intent", "parsing"]
+}

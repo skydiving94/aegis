@@ -1,0 +1,20 @@
+{
+  "id": "match_skills",
+  "name": "match_skills",
+  "description": "Matches sub-objectives to existing skills by tag overlap and name/description keyword matching.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "sub_objectives", "io_type": "list", "description": "Sub-objectives from decompose step"}
+  ],
+  "outputs": [
+    {"name": "execution_plan", "io_type": "list", "description": "Plan items with action (execute_existing or build_new_skill)"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": ["db_access"],
+  "risk_level": "low",
+  "code": "import json\nimport sys\nfrom db_access import search_skills_by_tags\n\ndef execute(inputs):\n    \"\"\"Match sub-objectives to existing skills.\"\"\"\n    sub_objectives = inputs.get('sub_objectives', [])\n    if isinstance(sub_objectives, str):\n        try:\n            sub_objectives = json.loads(sub_objectives)\n        except json.JSONDecodeError:\n            sub_objectives = []\n    if not isinstance(sub_objectives, list):\n        sub_objectives = []\n\n    plan = []\n    for obj in sub_objectives:\n        if not isinstance(obj, dict):\n            continue\n        \n        desc = obj.get('description', '')\n        # Build search tags from domain_tags + keywords from description\n        search_tags = list(obj.get('domain_tags', []))\n        # Add keywords from description for better matching\n        for word in desc.lower().replace('_', ' ').split():\n            if len(word) > 3 and word not in ('from', 'with', 'that', 'this', 'into', 'will'):\n                search_tags.append(word)\n        \n        # Check for explicit reuse\n        if obj.get('reuse_skill_id'):\n            plan.append({\n                'sub_objective': desc,\n                'action': 'execute_existing',\n                'skill_id': obj['reuse_skill_id']\n            })\n            print(f'  [match_skills] Reusing skill by ID: {obj[\"reuse_skill_id\"]}', file=sys.stderr)\n            continue\n        \n        # Search for matching skills (threshold: 0.3 for combined tag+keyword)\n        matches = search_skills_by_tags(search_tags, min_confidence=0.3)\n        if matches:\n            best = matches[0]\n            plan.append({\n                'sub_objective': desc,\n                'action': 'execute_existing',\n                'skill_id': best['skill_id']\n            })\n            print(f'  [match_skills] Matched: \"{desc[:60]}\" → skill \"{best[\"name\"]}\" (confidence: {best[\"confidence\"]})', file=sys.stderr)\n        else:\n            plan.append({\n                'sub_objective': desc,\n                'action': 'build_new_skill',\n                'context': obj\n            })\n            print(f'  [match_skills] No match for: \"{desc[:60]}\" — will build new skill', file=sys.stderr)\n    return {'execution_plan': plan}\n\noutputs = execute(inputs)",
+  "test_code": "def test_match_skills_empty():\n    result = execute({'sub_objectives': []})\n    assert result['execution_plan'] == []\n\ndef test_match_skills_with_reuse():\n    result = execute({'sub_objectives': [{'description': 'test', 'reuse_skill_id': 's1'}]})\n    assert result['execution_plan'][0]['action'] == 'execute_existing'",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "decompose", "matching"]
+}

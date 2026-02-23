@@ -1,0 +1,25 @@
+{
+  "id": "test_module",
+  "name": "test_module",
+  "description": "Runs a basic smoke test on the generated toolkit module in the sandbox.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "module_code", "io_type": "string", "description": "Validated module source code"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Toolkit specification"},
+    {"name": "valid", "io_type": "bool", "description": "Whether validation passed"}
+  ],
+  "outputs": [
+    {"name": "test_passed", "io_type": "bool", "description": "Whether smoke test passed"},
+    {"name": "module_code", "io_type": "string", "description": "Passthrough module code"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Passthrough toolkit spec"},
+    {"name": "test_output", "io_type": "string", "description": "Test output logs"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "code": "import json\n\ndef execute(inputs):\n    \"\"\"Run basic smoke test: import the module and check public API.\"\"\"\n    module_code = inputs.get('module_code', '')\n    toolkit_spec = inputs.get('toolkit_spec', {})\n    if isinstance(toolkit_spec, str):\n        toolkit_spec = json.loads(toolkit_spec)\n    valid = inputs.get('valid', True)\n    \n    if not valid:\n        return {\n            'test_passed': False,\n            'module_code': module_code,\n            'toolkit_spec': toolkit_spec,\n            'test_output': 'Skipped: module failed validation'\n        }\n    \n    # Try to compile and exec the module\n    test_log = []\n    try:\n        code_obj = compile(module_code, '<toolkit_module>', 'exec')\n        namespace = {}\n        exec(code_obj, namespace)\n        test_log.append('Module loaded successfully')\n        \n        # Check that public API items exist in namespace\n        public_api = toolkit_spec.get('public_api', [])\n        for api_item in public_api:\n            api_name = api_item.get('name', '')\n            top_name = api_name.split('.')[0]\n            if top_name in namespace:\n                test_log.append(f'Found: {top_name}')\n            else:\n                test_log.append(f'Missing: {top_name}')\n        \n        return {\n            'test_passed': True,\n            'module_code': module_code,\n            'toolkit_spec': toolkit_spec,\n            'test_output': '\\n'.join(test_log)\n        }\n    except Exception as e:\n        return {\n            'test_passed': False,\n            'module_code': module_code,\n            'toolkit_spec': toolkit_spec,\n            'test_output': f'Smoke test failed: {e}'\n        }\n\noutputs = execute(inputs)",
+  "test_code": "def test_smoke_test():\n    result = execute({'module_code': 'x = 1', 'toolkit_spec': {}, 'valid': True})\n    assert result['test_passed'] is True",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "toolkit_building", "testing"]
+}

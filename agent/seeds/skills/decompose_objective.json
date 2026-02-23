@@ -1,0 +1,40 @@
+{
+  "id": "decompose_objective",
+  "name": "decompose_objective",
+  "description": "Decomposes a user goal into sub-objectives by searching past solutions, LLM decomposition, skill matching, and plan emission.",
+  "tags": ["meta", "decompose", "planning"],
+  "is_meta": true,
+  "nodes": [
+    {"node_id": "search_past", "task_definition_id": "search_past"},
+    {"node_id": "decompose", "task_definition_id": "decompose"},
+    {"node_id": "match_skills", "task_definition_id": "match_skills"},
+    {"node_id": "emit_plan", "task_definition_id": "emit_plan"}
+  ],
+  "edges": [
+    {
+      "source_node_id": "search_past",
+      "target_node_id": "decompose",
+      "output_mapping": {
+        "past_objectives": "past_objectives",
+        "goal": "goal",
+        "entities": "entities",
+        "constraints": "constraints",
+        "domain": "domain"
+      },
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "decompose",
+      "target_node_id": "match_skills",
+      "output_mapping": {"sub_objectives": "sub_objectives"},
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "match_skills",
+      "target_node_id": "emit_plan",
+      "output_mapping": {"execution_plan": "execution_plan"},
+      "data_policy": "pass_through"
+    }
+  ],
+  "version": 1
+}

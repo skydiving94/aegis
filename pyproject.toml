@@ -1,0 +1,35 @@
+[project]
+name = "autonomous-agent"
+version = "0.1.0"
+description = "An autonomous task-solving agent that builds reusable skills via LLM-driven TDD."
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai",
+    "sqlalchemy[asyncio]",
+    "asyncpg",
+    "psycopg2-binary",
+    "networkx",
+    "rich",
+    "pydantic>=2.0",
+    "jinja2",
+    "jsonschema",
+    "spacy>=3.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "mypy", "ruff"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

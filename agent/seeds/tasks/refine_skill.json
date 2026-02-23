@@ -1,0 +1,28 @@
+{
+  "id": "refine_skill",
+  "name": "refine_skill",
+  "description": "Refines an existing skill DAG based on user feedback and execution errors.",
+  "task_type": "llm",
+  "inputs": [
+    {"name": "feedback", "io_type": "string", "description": "User's feedback or complaint"},
+    {"name": "last_skill_id", "io_type": "string", "description": "ID of the skill that failed or needs refinement"},
+    {"name": "last_skill_definition", "io_type": "dict", "description": "The exact JSON definition (DAG, tasks, code) of the last skill"},
+    {"name": "last_execution_results", "io_type": "dict", "description": "The results, including any error traces, from the last execution"}
+  ],
+  "outputs": [
+    {"name": "skill_name", "io_type": "string", "description": "Name for the refined skill"},
+    {"name": "skill_description", "io_type": "string", "description": "Description of the refined skill"},
+    {"name": "tags", "io_type": "list", "description": "Tags for the skill"},
+    {"name": "task_definitions", "io_type": "list", "description": "Refined list of task specs"},
+    {"name": "edges", "io_type": "list", "description": "Refined DAG edges"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "medium",
+  "prompt_template": "You are an expert software debugger and skill architect. The agent recently ran a skill, but it failed or wasn't what the user wanted.\nYour job is to REWRITE the skill DAG to fix the issue based on the user's feedback.\n\nUSER FEEDBACK / COMPLAINT:\n{{ feedback | default('The skill failed or produced incorrect results.', true) }}\n\nPREVIOUS SKILL DEFINITION:\n{{ last_skill_definition | tojson }}\n\nPREVIOUS EXECUTION RESULTS / ERRORS:\n{{ last_execution_results | tojson }}\n\nHOW TO FIX:\n1. Analyze the errors and feedback.\n2. Was it an API issue? Rewrite the python code (e.g. use a different endpoint, handle 404s gracefully, or fallback to simulated data if requested).\n3. Was it a logic issue? Change the task types (e.g., switch a python API fetch to a pure LLM hallucination task if the user asks you to \"just generate it yourself\").\n4. You must output the ENTIRE REFINED SKILL DAG (all tasks and edges, even those you didn't change).\n5. Keep outputs and inputs stable if possible, or update the edges if you rename things.\n\nRespond with ONLY valid JSON for the complete refined skill:\n{\n  \"skill_name\": \"...\",\n  \"skill_description\": \"...\",\n  \"tags\": [\"...\"],\n  \"task_definitions\": [\n    {\n      \"name\": \"descriptive_name\",\n      \"description\": \"...\",\n      \"task_type\": \"python|llm\",\n      \"risk_level\": \"low|medium\",\n      \"inputs\": [{\"name\":\"...\",\"io_type\":\"...\",\"description\":\"...\"}],\n      \"outputs\": [{\"name\":\"...\",\"io_type\":\"...\",\"description\":\"...\"}],\n      \"code\": \"REQUIRED for python tasks — complete executable code handling the fix\"\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_task_name\": \"...\",\n      \"target_task_name\": \"...\",\n      \"output_mapping\": {\"source\": \"target\"},\n      \"data_policy\": \"pass_through\"\n    }\n  ]\n}",
+  "system_instruction": "You are a skill debugger. Rewrite the previously failed skill definition to address user complaints. Always respond with valid JSON representing the entire complete skill DAG.",
+  "context_budget": 32000,
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "skill_building", "refinement"]
+}

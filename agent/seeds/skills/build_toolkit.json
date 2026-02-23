@@ -1,0 +1,41 @@
+{
+  "id": "build_toolkit",
+  "name": "build_toolkit",
+  "description": "Creates new toolkit modules: analyzes need, generates Python module, validates, tests, and registers.",
+  "tags": ["meta", "toolkit_building"],
+  "is_meta": true,
+  "nodes": [
+    {"node_id": "analyze_need", "task_definition_id": "analyze_need"},
+    {"node_id": "generate_module", "task_definition_id": "generate_module"},
+    {"node_id": "validate_module", "task_definition_id": "validate_module"},
+    {"node_id": "test_module", "task_definition_id": "test_module"},
+    {"node_id": "register_toolkit", "task_definition_id": "register_toolkit"}
+  ],
+  "edges": [
+    {
+      "source_node_id": "analyze_need",
+      "target_node_id": "generate_module",
+      "output_mapping": {"toolkit_spec": "toolkit_spec"},
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "generate_module",
+      "target_node_id": "validate_module",
+      "output_mapping": {"module_code": "module_code", "toolkit_spec": "toolkit_spec"},
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "validate_module",
+      "target_node_id": "test_module",
+      "output_mapping": {"module_code": "module_code", "toolkit_spec": "toolkit_spec", "valid": "valid"},
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "test_module",
+      "target_node_id": "register_toolkit",
+      "output_mapping": {"module_code": "module_code", "toolkit_spec": "toolkit_spec", "test_passed": "test_passed"},
+      "data_policy": "pass_through"
+    }
+  ],
+  "version": 1
+}

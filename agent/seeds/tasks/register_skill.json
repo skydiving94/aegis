@@ -1,0 +1,27 @@
+{
+  "id": "register_skill",
+  "name": "register_skill",
+  "description": "Validates the assembled skill definition against the skill schema and persists it to the database.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "created_task_ids", "io_type": "list", "description": "IDs of created task definitions"},
+    {"name": "task_id_map", "io_type": "dict", "description": "Map from task name to task ID"},
+    {"name": "edges", "io_type": "list", "description": "Resolved DAG edges"},
+    {"name": "skill_name", "io_type": "string", "description": "Name of the skill"},
+    {"name": "skill_description", "io_type": "string", "description": "Description of the skill"},
+    {"name": "tags", "io_type": "list", "description": "Tags for the skill"}
+  ],
+  "outputs": [
+    {"name": "success", "io_type": "bool", "description": "Whether registration succeeded"},
+    {"name": "skill_id", "io_type": "string", "description": "ID of the registered skill"},
+    {"name": "errors", "io_type": "list", "description": "Validation errors if any"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": ["db_access", "schema_validator"],
+  "risk_level": "low",
+  "code": "import json\nimport uuid\n\ndef execute(inputs):\n    \"\"\"Validate and persist the new skill + task definitions.\"\"\"\n    task_id_map = inputs.get('task_id_map', {})\n    if isinstance(task_id_map, str):\n        task_id_map = json.loads(task_id_map)\n    edges = inputs.get('edges', [])\n    if isinstance(edges, str):\n        edges = json.loads(edges)\n    tags = inputs.get('tags', [])\n    if isinstance(tags, str):\n        tags = json.loads(tags)\n    \n    skill_name = inputs.get('skill_name', 'unnamed_skill')\n    skill_id = f\"{skill_name.lower().replace(' ', '_')}_{uuid.uuid4().hex[:8]}\"\n    \n    # Build nodes from task_id_map\n    nodes = []\n    for task_name, task_id in task_id_map.items():\n        nodes.append({\n            'node_id': task_id,\n            'task_definition_id': task_id\n        })\n    \n    skill_data = {\n        'id': skill_id,\n        'name': skill_name,\n        'description': inputs.get('skill_description', ''),\n        'tags': tags,\n        'nodes': nodes,\n        'edges': edges,\n        'is_meta': False,\n        'version': 1\n    }\n    \n    # Validate against schema\n    from schema_validator import validate_skill_schema\n    errors = validate_skill_schema(skill_data)\n    if errors:\n        return {'success': False, 'skill_id': '', 'errors': errors}\n    \n    # Persist skill\n    from db_access import save_skill\n    save_skill(skill_data)\n    return {'success': True, 'skill_id': skill_id, 'errors': []}\n\noutputs = execute(inputs)",
+  "test_code": "def test_register_skill():\n    result = execute({\n        'task_id_map': {},\n        'created_task_ids': [],\n        'edges': [],\n        'skill_name': 'test',\n        'skill_description': 'test',\n        'tags': []\n    })\n    assert 'success' in result",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "skill_building", "registration"]
+}

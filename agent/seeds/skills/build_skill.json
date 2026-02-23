@@ -1,0 +1,40 @@
+{
+  "id": "build_skill",
+  "name": "build_skill",
+  "description": "Creates new skills and their constituent task definitions, enforcing TDD for Python tasks. Three nodes: analyze_objective designs the DAG, create_task_defs runs TDD for each task, register_skill persists the result.",
+  "tags": ["meta", "skill_building", "tdd"],
+  "is_meta": true,
+  "nodes": [
+    {"node_id": "analyze_objective", "task_definition_id": "analyze_objective"},
+    {"node_id": "create_task_defs", "task_definition_id": "create_task_defs"},
+    {"node_id": "register_skill", "task_definition_id": "register_skill"}
+  ],
+  "edges": [
+    {
+      "source_node_id": "analyze_objective",
+      "target_node_id": "create_task_defs",
+      "output_mapping": {
+        "task_definitions": "task_definitions",
+        "edges": "edges",
+        "skill_name": "skill_name",
+        "skill_description": "skill_description",
+        "tags": "tags"
+      },
+      "data_policy": "pass_through"
+    },
+    {
+      "source_node_id": "create_task_defs",
+      "target_node_id": "register_skill",
+      "output_mapping": {
+        "created_task_ids": "created_task_ids",
+        "task_id_map": "task_id_map",
+        "edges": "edges",
+        "skill_name": "skill_name",
+        "skill_description": "skill_description",
+        "tags": "tags"
+      },
+      "data_policy": "pass_through"
+    }
+  ],
+  "version": 1
+}

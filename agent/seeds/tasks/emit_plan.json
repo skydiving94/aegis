@@ -1,0 +1,22 @@
+{
+  "id": "emit_plan",
+  "name": "emit_plan",
+  "description": "Produces the final execution plan from matched skill assignments.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "execution_plan", "io_type": "list", "description": "Plan items from match_skills"}
+  ],
+  "outputs": [
+    {"name": "plan", "io_type": "list", "description": "Final execution plan"},
+    {"name": "build_items", "io_type": "list", "description": "Items requiring new skill building"},
+    {"name": "skill_ids", "io_type": "list", "description": "IDs of skills to execute"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "code": "import json\n\ndef execute(inputs):\n    \"\"\"Emit final execution plan, separating build items from executable skills.\"\"\"\n    execution_plan = inputs.get('execution_plan', [])\n    if isinstance(execution_plan, str):\n        execution_plan = json.loads(execution_plan)\n\n    build_items = []\n    skill_ids = []\n    for item in execution_plan:\n        if item.get('action') == 'build_new_skill':\n            build_items.append(item)\n        elif item.get('action') == 'execute_existing':\n            skill_ids.append(item['skill_id'])\n\n    return {\n        'plan': execution_plan,\n        'build_items': build_items,\n        'skill_ids': skill_ids\n    }\n\noutputs = execute(inputs)",
+  "test_code": "def test_emit_plan_empty():\n    result = execute({'execution_plan': []})\n    assert result['plan'] == []\n    assert result['build_items'] == []\n    assert result['skill_ids'] == []\n\ndef test_emit_plan_mixed():\n    plan = [\n        {'action': 'execute_existing', 'skill_id': 's1', 'sub_objective': 'a'},\n        {'action': 'build_new_skill', 'sub_objective': 'b', 'context': {}}\n    ]\n    result = execute({'execution_plan': plan})\n    assert len(result['skill_ids']) == 1\n    assert len(result['build_items']) == 1",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "decompose", "planning"]
+}

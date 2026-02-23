@@ -1,0 +1,24 @@
+{
+  "id": "validate_module",
+  "name": "validate_module",
+  "description": "Validates generated toolkit module code: syntax check, import check, and basic safety scan.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "module_code", "io_type": "string", "description": "Generated Python module source"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Toolkit specification"}
+  ],
+  "outputs": [
+    {"name": "valid", "io_type": "bool", "description": "Whether validation passed"},
+    {"name": "module_code", "io_type": "string", "description": "Passthrough module code"},
+    {"name": "toolkit_spec", "io_type": "dict", "description": "Passthrough toolkit spec"},
+    {"name": "errors", "io_type": "list", "description": "Validation errors if any"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": [],
+  "risk_level": "low",
+  "code": "import ast\nimport json\n\ndef execute(inputs):\n    \"\"\"Validate module code: syntax, dangerous imports, basic safety.\"\"\"\n    module_code = inputs.get('module_code', '')\n    if isinstance(module_code, dict):\n        module_code = module_code.get('result', str(module_code))\n    toolkit_spec = inputs.get('toolkit_spec', {})\n    if isinstance(toolkit_spec, str):\n        toolkit_spec = json.loads(toolkit_spec)\n    errors = []\n    \n    # Strip markdown fences if present\n    if module_code.startswith('```'):\n        lines = module_code.split('\\n')\n        module_code = '\\n'.join(lines[1:-1]) if lines[-1].strip() == '```' else '\\n'.join(lines[1:])\n    \n    # 1. Syntax check\n    try:\n        tree = ast.parse(module_code)\n    except SyntaxError as e:\n        errors.append(f'Syntax error: {e}')\n        return {'valid': False, 'module_code': module_code, 'toolkit_spec': toolkit_spec, 'errors': errors}\n    \n    # 2. Safety scan — check for dangerous operations\n    dangerous_imports = {'subprocess', 'shutil', 'ctypes', 'multiprocessing'}\n    for node in ast.walk(tree):\n        if isinstance(node, ast.Import):\n            for alias in node.names:\n                if alias.name in dangerous_imports:\n                    errors.append(f'Potentially dangerous import: {alias.name}')\n        elif isinstance(node, ast.ImportFrom):\n            if node.module and node.module.split('.')[0] in dangerous_imports:\n                errors.append(f'Potentially dangerous import: {node.module}')\n    \n    # 3. Check public API functions/classes exist\n    defined_names = set()\n    for node in ast.walk(tree):\n        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):\n            defined_names.add(node.name)\n    \n    public_api = toolkit_spec.get('public_api', [])\n    for api_item in public_api:\n        api_name = api_item.get('name', '')\n        top_name = api_name.split('.')[0]  # ClassName from ClassName.method\n        if top_name and top_name not in defined_names:\n            errors.append(f'Expected public API item not found: {top_name}')\n    \n    return {\n        'valid': len(errors) == 0,\n        'module_code': module_code,\n        'toolkit_spec': toolkit_spec,\n        'errors': errors\n    }\n\noutputs = execute(inputs)",
+  "test_code": "def test_valid_code():\n    result = execute({'module_code': 'def hello():\\n    return 1', 'toolkit_spec': {}})\n    assert result['valid'] is True\n\ndef test_invalid_syntax():\n    result = execute({'module_code': 'def hello(', 'toolkit_spec': {}})\n    assert result['valid'] is False",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "toolkit_building", "validation"]
+}

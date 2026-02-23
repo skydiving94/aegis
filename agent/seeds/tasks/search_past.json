@@ -1,0 +1,26 @@
+{
+  "id": "search_past",
+  "name": "search_past",
+  "description": "Queries the database for previously solved similar objectives by domain and entity tags. Returns empty list on cold-start.",
+  "task_type": "python",
+  "inputs": [
+    {"name": "goal", "io_type": "string", "description": "The user's goal"},
+    {"name": "entities", "io_type": "list", "description": "Key entities from intent"},
+    {"name": "domain", "io_type": "string", "description": "Domain category"}
+  ],
+  "outputs": [
+    {"name": "past_objectives", "io_type": "list", "description": "List of matching past objectives with skill_ids"},
+    {"name": "goal", "io_type": "string", "description": "Passthrough goal"},
+    {"name": "entities", "io_type": "list", "description": "Passthrough entities"},
+    {"name": "constraints", "io_type": "list", "description": "Passthrough constraints"},
+    {"name": "domain", "io_type": "string", "description": "Passthrough domain"}
+  ],
+  "preconditions": [],
+  "toolkit_refs": ["db_access"],
+  "risk_level": "low",
+  "code": "import json\nfrom db_access import search_objectives\n\ndef execute(inputs):\n    \"\"\"Search for previously solved similar objectives.\"\"\"\n    domain = inputs.get('domain', '')\n    entities = inputs.get('entities', [])\n    goal = inputs.get('goal', '')\n    constraints = inputs.get('constraints', [])\n    \n    past = search_objectives(\n        domain=domain,\n        tags=entities,\n        limit=5\n    )\n    \n    return {\n        'past_objectives': past,\n        'goal': goal,\n        'entities': entities if isinstance(entities, list) else [],\n        'constraints': constraints if isinstance(constraints, list) else [],\n        'domain': domain\n    }\n\noutputs = execute(inputs)",
+  "test_code": "def test_search_past():\n    result = execute({'domain': 'test', 'entities': [], 'goal': 'test'})\n    assert 'past_objectives' in result\n    assert isinstance(result['past_objectives'], list)\n    assert result['goal'] == 'test'",
+  "max_retries": 3,
+  "version": 1,
+  "tags": ["meta", "decompose", "search"]
+}

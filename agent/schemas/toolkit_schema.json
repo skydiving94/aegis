@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "description", "public_api"],
+  "properties": {
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "dependencies": {"type": "array", "items": {"type": "string"}},
+    "requires_approval": {"type": "boolean"},
+    "public_api": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "params": {"type": "string"},
+          "returns": {"type": "string"}
+        }
+      }
+    }
+  }
+}
