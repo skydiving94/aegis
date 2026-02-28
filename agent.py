@@ -48,7 +48,7 @@ class Agent:
         seed_loader: SeedLoader,
         task_repo: TaskRepository,
         config: dict[str, Any] | None = None,
-        pref_repo=None,
+        pref_repo: Any = None,
     ) -> None:
         self._executor = executor
         self._skill_registry = skill_registry
@@ -64,7 +64,7 @@ class Agent:
 
         # Initialize handlers
         self.intent_handler = IntentHandler(executor, seed_loader, pref_repo)
-        self.execution_handler = ExecutionHandler(executor, seed_loader, toolkit_registry, task_repo, scrubber)
+        self.execution_handler = ExecutionHandler(executor, seed_loader, toolkit_registry, task_repo, scrubber, pref_repo)
         self.feedback_handler = FeedbackHandler(executor, seed_loader, skill_registry, task_repo)
         self.display_handler = DisplayHandler()
         self.setup_handler = SetupHandler(seed_loader, task_repo, skill_registry, toolkit_registry)

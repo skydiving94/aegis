@@ -153,13 +153,23 @@ class LLMTask(AbstractTask):
 
         logger.debug("LLMTask '%s' raw response: %s", self.name, response.content[:500])
 
+        content = response.content.strip()
+        if content.startswith("```json"):
+            content = content[7:]
+        elif content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
         # Parse the LLM response as JSON
         try:
-            parsed_outputs = json.loads(response.content)
+            parsed_outputs = json.loads(content)
             if not isinstance(parsed_outputs, dict):
                 parsed_outputs = {"result": parsed_outputs}
         except json.JSONDecodeError:
             # Fallback for unexpected raw text
+            logger.error("JSON decode failed for task '%s'. Raw response:\n%s", self.name, response.content)
             parsed_outputs = {"text": response.content}
 
         # If we have defined output fields, filter to only those.

@@ -21,12 +21,14 @@ class ExecutionHandler:
         toolkit_registry: ToolkitRegistry,
         task_repo: Any,
         scrubber: Any,
+        pref_repo: Any = None,
     ) -> None:
         self._executor = executor
         self._seed_loader = seed_loader
         self._toolkit_registry = toolkit_registry
         self._task_repo = task_repo
         self._scrubber = scrubber
+        self._pref_repo = pref_repo
 
     async def build_missing_skills(
         self,
@@ -77,6 +79,13 @@ class ExecutionHandler:
                 except Exception as e:
                     logger.warning("Could not load existing tasks for context: %s", e)
 
+                user_prefs = {}
+                if self._pref_repo:
+                    try:
+                        user_prefs = await self._pref_repo.get_all()
+                    except Exception as e:
+                        logger.warning("Could not load user preferences: %s", e)
+
                 build_skill = self._seed_loader.load_one("build_skill")
                 build_result = await self._executor.execute_skill(
                     build_skill,
@@ -88,6 +97,7 @@ class ExecutionHandler:
                         "scrubbed_files": scrubbed_files,
                         "available_toolkits": avail_tks_dicts,
                         "existing_tasks": existing_tasks_list,
+                        "user_preferences": user_prefs,
                     },
                 )
 

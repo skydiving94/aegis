@@ -4,27 +4,80 @@
   "description": "Analyzes an objective and designs a complete skill as a DAG of connected tasks.",
   "task_type": "llm",
   "inputs": [
-    {"name": "objective_description", "io_type": "string", "description": "Description of what the skill should accomplish"},
-    {"name": "objective_inputs", "io_type": "list", "description": "Expected inputs for the skill"},
-    {"name": "objective_outputs", "io_type": "list", "description": "Expected outputs for the skill"},
-    {"name": "available_toolkits", "io_type": "list", "description": "Toolkits available for use"},
-    {"name": "existing_tasks", "io_type": "list", "description": "Existing task definitions that could be reused"},
-    {"name": "scrubbed_files", "io_type": "dict", "description": "Privacy-scrubbed file contents for context"}
+    {
+      "name": "objective_description",
+      "io_type": "string",
+      "description": "Description of what the skill should accomplish"
+    },
+    {
+      "name": "objective_inputs",
+      "io_type": "list",
+      "description": "Expected inputs for the skill"
+    },
+    {
+      "name": "objective_outputs",
+      "io_type": "list",
+      "description": "Expected outputs for the skill"
+    },
+    {
+      "name": "available_toolkits",
+      "io_type": "list",
+      "description": "Toolkits available for use"
+    },
+    {
+      "name": "existing_tasks",
+      "io_type": "list",
+      "description": "Existing task definitions that could be reused"
+    },
+    {
+      "name": "scrubbed_files",
+      "io_type": "dict",
+      "description": "Privacy-scrubbed file contents for context"
+    },
+    {
+      "name": "user_preferences",
+      "io_type": "dict",
+      "description": "Persistent user preferences, instructions, and constraints."
+    }
   ],
   "outputs": [
-    {"name": "skill_name", "io_type": "string", "description": "Name for the new skill"},
-    {"name": "skill_description", "io_type": "string", "description": "Description of the skill"},
-    {"name": "tags", "io_type": "list", "description": "Tags for the skill"},
-    {"name": "task_definitions", "io_type": "list", "description": "List of task specs to create"},
-    {"name": "edges", "io_type": "list", "description": "DAG edges between tasks"}
+    {
+      "name": "skill_name",
+      "io_type": "string",
+      "description": "Name for the new skill"
+    },
+    {
+      "name": "skill_description",
+      "io_type": "string",
+      "description": "Description of the skill"
+    },
+    {
+      "name": "tags",
+      "io_type": "list",
+      "description": "Tags for the skill"
+    },
+    {
+      "name": "task_definitions",
+      "io_type": "list",
+      "description": "List of task specs to create"
+    },
+    {
+      "name": "edges",
+      "io_type": "list",
+      "description": "DAG edges between tasks"
+    }
   ],
   "preconditions": [],
   "toolkit_refs": [],
   "risk_level": "low",
-  "prompt_template": "Design a complete skill (a DAG of tasks) to accomplish this objective:\n\nOBJECTIVE: {{ objective_description | default('unspecified', true) }}\n\nRULES:\n1. Create 2-4 tasks connected by edges forming a DAG.\n2. For HTTP API calls, use task_type \"python\" with COMPLETE code using urllib.request.\n   - The code MUST define: def execute(inputs) and end with: outputs = execute(inputs)\n   - Use ONLY standard library (urllib.request, json, os, re). NO third-party packages.\n   - ALWAYS EXTRACT PARAMETERS DYNAMICALLY from `inputs.get('user_input', '')` or `inputs.get('entities', [])`.\n   - NEVER, EVER hardcode a specific entity (like a city name or stock ticker) into the python code! The skill must be reusable!\n   - Always handle errors with try/except.\n   - Use a 15-second timeout for HTTP requests.\n3. For text interpretation or formatting, use task_type \"llm\" (no code needed).\n4. Connect tasks with edges so outputs flow to the next task's inputs.\n5. Every task MUST have a descriptive name.\n6. Output key names in edges must match EXACTLY between source output and target input.\n\nFULL REUSABLE EXAMPLE — \"Fetch weather for the requested location\":\n{\n  \"skill_name\": \"GetWeatherReport\",\n  \"skill_description\": \"Fetches current weather for a dynamically extracted location and formats a readable report\",\n  \"tags\": [\"weather\", \"api\"],\n  \"task_definitions\": [\n    {\n      \"name\": \"fetch_weather\",\n      \"description\": \"Fetch current weather data from wttr.in API for a dynamic location\",\n      \"task_type\": \"python\",\n      \"risk_level\": \"medium\",\n      \"inputs\": [{\"name\": \"user_input\", \"io_type\": \"string\", \"description\": \"The user query containing a location\"}],\n      \"outputs\": [{\"name\": \"weather_data\", \"io_type\": \"dict\", \"description\": \"Raw weather data from API\"}],\n      \"code\": \"import urllib.request\\nimport urllib.parse\\nimport json\\nimport re\\n\\ndef execute(inputs):\\n    user_input = inputs.get('user_input', '')\\n    # Extract location dynamically — DO NOT HARDCODE!\\n    location = re.search(r'\\\\b\\\\d{5}\\\\b', user_input)\\n    if location:\\n        loc_str = location.group()\\n    else:\\n        words = user_input.replace(',', '').replace('?', '').split()\\n        # E.g. find word after 'in' or 'for'\\n        try:\\n            idx = next(i for i, w in enumerate(words) if w.lower() in ('in', 'for'))\\n            loc_str = ' '.join(words[idx+1:])\\n        except StopIteration:\\n            loc_str = words[-1] if words else 'Seattle'\\n    try:\\n        loc_encoded = urllib.parse.quote(loc_str)\\n        url = f'https://wttr.in/{loc_encoded}?format=j1'\\n        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\\n        with urllib.request.urlopen(req, timeout=15) as resp:\\n            data = json.loads(resp.read().decode())\\n        current = data.get('current_condition', [{}])[0]\\n        return {\\n            'weather_data': {\\n                'location': loc_str,\\n                'temp_f': current.get('temp_F', 'N/A'),\\n                'temp_c': current.get('temp_C', 'N/A'),\\n                'condition': current.get('weatherDesc', [{}])[0].get('value', 'N/A'),\\n                'humidity': current.get('humidity', 'N/A'),\\n                'wind_mph': current.get('windspeedMiles', 'N/A')\\n            }\\n        }\\n    except Exception as e:\\n        return {'weather_data': {'error': str(e), 'location': loc_str}}\\noutputs = execute(inputs)\"\n    },\n    {\n      \"name\": \"format_report\",\n      \"description\": \"Format weather data into a human-readable report\",\n      \"task_type\": \"llm\",\n      \"risk_level\": \"low\",\n      \"inputs\": [{\"name\": \"weather_data\", \"io_type\": \"dict\", \"description\": \"Weather data from API\"}],\n      \"outputs\": [{\"name\": \"report\", \"io_type\": \"string\", \"description\": \"Human-readable weather report\"}]\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_task_name\": \"fetch_weather\",\n      \"target_task_name\": \"format_report\",\n      \"output_mapping\": {\"weather_data\": \"weather_data\"},\n      \"data_policy\": \"pass_through\"\n    }\n  ]\n}\n\nNow design a reusable skill for this objective. Respond with ONLY valid JSON:\n{\n  \"skill_name\": \"...\",\n  \"skill_description\": \"...\",\n  \"tags\": [\"...\"],\n  \"task_definitions\": [\n    {\n      \"name\": \"descriptive_name\",\n      \"description\": \"...\",\n      \"task_type\": \"python|llm\",\n      \"risk_level\": \"low|medium\",\n      \"inputs\": [{\"name\":\"...\",\"io_type\":\"string|int|float|bool|list|dict|any\",\"description\":\"...\"}],\n      \"outputs\": [{\"name\":\"...\",\"io_type\":\"string|int|float|bool|list|dict|any\",\"description\":\"...\"}],\n      \"code\": \"REQUIRED for python tasks — full executable code with execute(inputs). YOU MUST NOT HARDCODE SPECIFIC VALUES (use dynamic extraction from inputs).\"\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_task_name\": \"...\",\n      \"target_task_name\": \"...\",\n      \"output_mapping\": {\"source_output_key\": \"target_input_key\"},\n      \"data_policy\": \"pass_through\"\n    }\n  ]\n}",
+  "prompt_template": "USER PREFERENCES & CONSTRAINTS: {{ user_preferences | default({}, true) | tojson }}\n\nDesign a complete skill (a DAG of tasks) to accomplish this objective:\n\nOBJECTIVE: {{ objective_description | default('unspecified', true) }}\n\nRULES:\n7. If USER PREFERENCES mention a specific API or constraint, you MUST STRICTLY use it instead of defaulting to other APIs! Design tasks around the specified API.\n1. Create 2-4 tasks connected by edges forming a DAG.\n2. For HTTP API calls, use task_type \"python\" with COMPLETE code using urllib.request.\n   - The code MUST define: def execute(inputs) and end with: outputs = execute(inputs)\n   - Use ONLY standard library (urllib.request, json, os, re). NO third-party packages.\n   - ALWAYS EXTRACT PARAMETERS DYNAMICALLY from `inputs.get('user_input', '')` or `inputs.get('entities', [])`.\n   - NEVER, EVER hardcode a specific entity (like a city name or stock ticker) into the python code! The skill must be reusable!\n   - Always handle errors with try/except.\n   - Use a 15-second timeout for HTTP requests.\n3. For text interpretation or formatting, use task_type \"llm\" (no code needed).\n4. Connect tasks with edges so outputs flow to the next task's inputs.\n5. Every task MUST have a descriptive name.\n6. Output key names in edges must match EXACTLY between source output and target input.\n\nFULL REUSABLE EXAMPLE \u2014 \"Fetch weather for the requested location\":\n{\n  \"skill_name\": \"GetWeatherReport\",\n  \"skill_description\": \"Fetches current weather for a dynamically extracted location and formats a readable report\",\n  \"tags\": [\"weather\", \"api\"],\n  \"task_definitions\": [\n    {\n      \"name\": \"fetch_weather\",\n      \"description\": \"Fetch current weather data from wttr.in API for a dynamic location\",\n      \"task_type\": \"python\",\n      \"risk_level\": \"medium\",\n      \"inputs\": [{\"name\": \"user_input\", \"io_type\": \"string\", \"description\": \"The user query containing a location\"}],\n      \"outputs\": [{\"name\": \"weather_data\", \"io_type\": \"dict\", \"description\": \"Raw weather data from API\"}],\n      \"code\": \"import urllib.request\\nimport urllib.parse\\nimport json\\nimport re\\n\\ndef execute(inputs):\\n    user_input = inputs.get('user_input', '')\\n    # Extract location dynamically \u2014 DO NOT HARDCODE!\\n    location = re.search(r'\\\\b\\\\d{5}\\\\b', user_input)\\n    if location:\\n        loc_str = location.group()\\n    else:\\n        words = user_input.replace(',', '').replace('?', '').split()\\n        # E.g. find word after 'in' or 'for'\\n        try:\\n            idx = next(i for i, w in enumerate(words) if w.lower() in ('in', 'for'))\\n            loc_str = ' '.join(words[idx+1:])\\n        except StopIteration:\\n            loc_str = words[-1] if words else 'Seattle'\\n    try:\\n        loc_encoded = urllib.parse.quote(loc_str)\\n        url = f'https://wttr.in/{loc_encoded}?format=j1'\\n        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\\n        with urllib.request.urlopen(req, timeout=15) as resp:\\n            data = json.loads(resp.read().decode())\\n        current = data.get('current_condition', [{}])[0]\\n        return {\\n            'weather_data': {\\n                'location': loc_str,\\n                'temp_f': current.get('temp_F', 'N/A'),\\n                'temp_c': current.get('temp_C', 'N/A'),\\n                'condition': current.get('weatherDesc', [{}])[0].get('value', 'N/A'),\\n                'humidity': current.get('humidity', 'N/A'),\\n                'wind_mph': current.get('windspeedMiles', 'N/A')\\n            }\\n        }\\n    except Exception as e:\\n        return {'weather_data': {'error': str(e), 'location': loc_str}}\\noutputs = execute(inputs)\"\n    },\n    {\n      \"name\": \"format_report\",\n      \"description\": \"Format weather data into a human-readable report\",\n      \"task_type\": \"llm\",\n      \"risk_level\": \"low\",\n      \"inputs\": [{\"name\": \"weather_data\", \"io_type\": \"dict\", \"description\": \"Weather data from API\"}],\n      \"outputs\": [{\"name\": \"report\", \"io_type\": \"string\", \"description\": \"Human-readable weather report\"}]\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_task_name\": \"fetch_weather\",\n      \"target_task_name\": \"format_report\",\n      \"output_mapping\": {\"weather_data\": \"weather_data\"},\n      \"data_policy\": \"pass_through\"\n    }\n  ]\n}\n\nNow design a reusable skill for this objective. Respond with ONLY valid JSON:\n{\n  \"skill_name\": \"...\",\n  \"skill_description\": \"...\",\n  \"tags\": [\"...\"],\n  \"task_definitions\": [\n    {\n      \"name\": \"descriptive_name\",\n      \"description\": \"...\",\n      \"task_type\": \"python|llm\",\n      \"risk_level\": \"low|medium\",\n      \"inputs\": [{\"name\":\"...\",\"io_type\":\"string|int|float|bool|list|dict|any\",\"description\":\"...\"}],\n      \"outputs\": [{\"name\":\"...\",\"io_type\":\"string|int|float|bool|list|dict|any\",\"description\":\"...\"}],\n      \"code\": \"REQUIRED for python tasks \u2014 full executable code with execute(inputs). YOU MUST NOT HARDCODE SPECIFIC VALUES (use dynamic extraction from inputs).\"\n    }\n  ],\n  \"edges\": [\n    {\n      \"source_task_name\": \"...\",\n      \"target_task_name\": \"...\",\n      \"output_mapping\": {\"source_output_key\": \"target_input_key\"},\n      \"data_policy\": \"pass_through\"\n    }\n  ]\n}",
   "system_instruction": "You are a skill architect. Design reusable task DAGs with NO HARDCODED SPECIFIC VALUES. Always extract entities (locations, symbols) dynamically from the inputs list or user_input string. Always respond with valid JSON only. For HTTP/API tasks, ALWAYS use task_type python with complete executable code using urllib.request.",
   "context_budget": 32000,
   "max_retries": 3,
   "version": 1,
-  "tags": ["meta", "skill_building", "design"]
+  "tags": [
+    "meta",
+    "skill_building",
+    "design"
+  ]
 }
