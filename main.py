@@ -11,19 +11,19 @@ import sys
 from dotenv import load_dotenv  # type: ignore[import-untyped]
 from rich.console import Console
 
-from agent.agent import Agent
-from agent.executor.dag_executor import DAGExecutor
-from agent.llm.gemini_client import GeminiClient
-from agent.privacy.cli_approval import CLIApprovalGate
-from agent.privacy.spacy_scrubber import SpaCyNERScrubber
-from agent.registry.skill_registry import SkillRegistry
-from agent.registry.toolkit_registry import ToolkitRegistry
-from agent.sandbox.subprocess_runner import SubprocessRunner
-from agent.seeds.seed_loader import SeedLoader
-from agent.store.skill_repository import SkillRepository
-from agent.store.task_repository import TaskRepository
-from agent.store.user_preferences import UserPreferenceRepository
-from agent.store.toolkit_repository import ToolkitRepository
+from agent import Agent
+from helpers.executor.dag_executor import DAGExecutor
+from helpers.llm.gemini_client import GeminiClient
+from helpers.privacy.cli_approval import CLIApprovalGate
+from helpers.privacy.spacy_scrubber import SpaCyNERScrubber
+from registry.skill_registry import SkillRegistry
+from registry.toolkit_registry import ToolkitRegistry
+from core.container.subprocess_runner import SubprocessRunner
+from seeds.seed_loader import SeedLoader
+from core.data.db.repository.skill_repository import SkillRepository
+from core.data.db.repository.task_repository import TaskRepository
+from core.data.db.repository.user_preferences import UserPreferenceRepository
+from core.data.db.repository.toolkit_repository import ToolkitRepository
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -37,7 +37,8 @@ async def create_agent(config: dict[str, str]) -> Agent:
         create_async_engine,
     )
 
-    from agent.store.orm_models import Base
+    from core.data.db.entities.base import Base
+    from sqlalchemy import text
 
     # Database — PostgreSQL required
     db_url = config.get("DATABASE_URL", "")
@@ -50,6 +51,8 @@ async def create_agent(config: dict[str, str]) -> Agent:
 
     # Create all tables
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS framework"))
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS vector_store"))
         await conn.run_sync(Base.metadata.create_all)
 
     session_factory = async_sessionmaker(engine, expire_on_commit=False)

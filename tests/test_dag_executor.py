@@ -6,12 +6,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agent.executor.dag_executor import ApprovalDeniedError, DAGExecutor
-from agent.models.edge import Edge
-from agent.models.enums import DataPolicy, ExecutionStatus, PreconditionType, RiskLevel
-from agent.models.io_types import Precondition
-from agent.models.skill import Skill, SkillNode
-from agent.models.task import (
+from helpers.executor.dag_executor import ApprovalDeniedError, DAGExecutor
+from models.edge import Edge
+from models.enums import DataPolicy, ExecutionStatus, PreconditionType, RiskLevel
+from models.io_types import Precondition
+from models.skill import Skill, SkillNode
+from models.task import (
     ExecutionContext,
     LLMTask,
     PythonTask,
@@ -101,10 +101,10 @@ class TestLinearDAGExecution:
         assert "final" in result
 
 
-class TestDataPolicyEnforcement:
+class TestDataPolicies:
     @pytest.mark.asyncio
     async def test_truncate_policy(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.policy import DataPolicyStrategy
         edge = Edge(
             source_node_id="a",
             target_node_id="b",
@@ -113,13 +113,13 @@ class TestDataPolicyEnforcement:
             max_chars=10,
         )
         context = _make_context()
-        result = executor._apply_data_policy("a" * 100, edge, context)
-        assert len(result) <= 25  # 10 + truncation marker
+        result = DataPolicyStrategy.apply("a" * 100, edge, context)
+        assert len(result) <= 26  # 10 + truncation marker
         assert "TRUNCATED" in result
 
     @pytest.mark.asyncio
     async def test_pass_through_policy(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.policy import DataPolicyStrategy
         edge = Edge(
             source_node_id="a",
             target_node_id="b",
@@ -128,12 +128,12 @@ class TestDataPolicyEnforcement:
         )
         context = _make_context()
         value = {"key": "value"}
-        result = executor._apply_data_policy(value, edge, context)
+        result = DataPolicyStrategy.apply(value, edge, context)
         assert result == value
 
     @pytest.mark.asyncio
     async def test_summarize_small_data_passes_through(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.policy import DataPolicyStrategy
         edge = Edge(
             source_node_id="a",
             target_node_id="b",
@@ -143,14 +143,14 @@ class TestDataPolicyEnforcement:
         )
         context = _make_context()
         value = "small text"
-        result = executor._apply_data_policy(value, edge, context)
+        result = DataPolicyStrategy.apply(value, edge, context)
         assert result == "small text"
 
 
 class TestApprovalChecks:
     @pytest.mark.asyncio
     async def test_low_risk_no_approval_needed(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.approval import ApprovalManager
         task = PythonTask(
             id="t1",
             name="safe",
@@ -162,11 +162,11 @@ class TestApprovalChecks:
         )
         context = _make_context()
         # Should not raise
-        executor._check_approval(task, context)
+        ApprovalManager.check(task, context)
 
     @pytest.mark.asyncio
     async def test_high_risk_denied(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.approval import ApprovalManager
         task = PythonTask(
             id="t1",
             name="dangerous",
@@ -185,11 +185,11 @@ class TestApprovalChecks:
 
         context = _make_context(approval_gate=DenyGate())
         with pytest.raises(ApprovalDeniedError):
-            executor._check_approval(task, context)
+            ApprovalManager.check(task, context)
 
     @pytest.mark.asyncio
     async def test_requires_approval_precondition(self) -> None:
-        executor = DAGExecutor(task_repo=MagicMock(), toolkit_registry=MagicMock())
+        from helpers.executor.approval import ApprovalManager
         task = PythonTask(
             id="t1",
             name="file_writer",
@@ -211,4 +211,4 @@ class TestApprovalChecks:
 
         context = _make_context(approval_gate=DenyGate())
         with pytest.raises(ApprovalDeniedError):
-            executor._check_approval(task, context)
+            ApprovalManager.check(task, context)

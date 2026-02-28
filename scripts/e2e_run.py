@@ -4,7 +4,7 @@ import sys
 from dotenv import load_dotenv
 
 from main import create_agent
-from agent.privacy.base_approval import AbstractApprovalGate
+from helpers.privacy.base_approval import AbstractApprovalGate
 
 
 class AutoApprovalGate(AbstractApprovalGate):

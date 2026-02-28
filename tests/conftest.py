@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agent.llm.base_client import AbstractLLMClient, LLMResponse, UsageStats
-from agent.models.enums import RiskLevel
-from agent.models.task import ExecutionContext, TaskResult
-from agent.privacy.base_approval import AbstractApprovalGate
-from agent.privacy.base_scrubber import AbstractPrivacyScrubber, ScrubResult
-from agent.sandbox.base_runner import AbstractSandboxRunner, SandboxResult
+from helpers.llm.base_client import AbstractLLMClient, LLMResponse, UsageStats
+from models.enums import RiskLevel
+from models.task import ExecutionContext, TaskResult
+from helpers.privacy.base_approval import AbstractApprovalGate
+from helpers.privacy.base_scrubber import AbstractPrivacyScrubber, ScrubResult
+from core.container.base_runner import AbstractSandboxRunner, SandboxResult
 
 
 class MockLLMClient(AbstractLLMClient):
@@ -77,6 +77,9 @@ class MockApprovalGate(AbstractApprovalGate):
 
     def approve_task_output(self, task_name: str, result: TaskResult) -> bool:
         return True
+
+    def seek_clarification(self, question: str, context: dict[str, str]) -> str | None:
+        return None
 
     def get_approved_paths(self) -> list[str]:
         return []

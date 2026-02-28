@@ -4,20 +4,20 @@ E2E Script to test the feedback loop / refinement pipeline.
 import asyncio
 import os
 from dotenv import load_dotenv
-from agent.agent import Agent
+from agent import Agent
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from agent.store.task_repository import TaskRepository
-from agent.store.skill_repository import SkillRepository
-from agent.store.toolkit_repository import ToolkitRepository
-from agent.store.user_preferences import UserPreferenceRepository
-from agent.registry.skill_registry import SkillRegistry
-from agent.registry.toolkit_registry import ToolkitRegistry
-from agent.llm.gemini_client import GeminiClient
-from agent.sandbox.subprocess_runner import SubprocessRunner
-from agent.privacy.cli_approval import CLIApprovalGate
-from agent.privacy.spacy_scrubber import SpaCyNERScrubber
-from agent.seeds.seed_loader import SeedLoader
-from agent.executor.dag_executor import DAGExecutor
+from core.data.db.repository.task_repository import TaskRepository
+from core.data.db.repository.skill_repository import SkillRepository
+from core.data.db.repository.toolkit_repository import ToolkitRepository
+from core.data.db.repository.user_preferences import UserPreferenceRepository
+from registry.skill_registry import SkillRegistry
+from registry.toolkit_registry import ToolkitRegistry
+from helpers.llm.gemini_client import GeminiClient
+from core.container.subprocess_runner import SubprocessRunner
+from helpers.privacy.cli_approval import CLIApprovalGate
+from helpers.privacy.spacy_scrubber import SpaCyNERScrubber
+from seeds.seed_loader import SeedLoader
+from helpers.executor.dag_executor import DAGExecutor
 
 load_dotenv('.env')
 

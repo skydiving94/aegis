@@ -1,0 +1,128 @@
+fix_imports_2.py:4: error: Function is missing a return type annotation  [no-untyped-def]
+fix_imports_2.py:4: note: Use "-> None" if function does not return a value
+fix_imports_2.py:35: error: Call to untyped function "fix_imports" in typed context  [no-untyped-call]
+fix_imports.py:4: error: Function is missing a return type annotation  [no-untyped-def]
+fix_imports.py:4: note: Use "-> None" if function does not return a value
+fix_imports.py:39: error: Call to untyped function "fix_imports" in typed context  [no-untyped-call]
+internal_toolkits/schema_validator.py:28: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+internal_toolkits/schema_validator.py:35: error: Library stubs not installed for "jsonschema"  [import-untyped]
+internal_toolkits/schema_validator.py:35: note: Hint: "python3 -m pip install types-jsonschema"
+internal_toolkits/schema_validator.py:35: note: (or run "mypy --install-types" to install all missing stub packages)
+helpers/schemas/validator.py:6: error: Library stubs not installed for "jsonschema"  [import-untyped]
+internal_toolkits/db_access.py:25: error: Function is missing a return type annotation  [no-untyped-def]
+internal_toolkits/db_access.py:58: error: Call to untyped function "_get_session" in typed context  [no-untyped-call]
+internal_toolkits/db_access.py:109: error: Call to untyped function "_get_session" in typed context  [no-untyped-call]
+internal_toolkits/db_access.py:180: error: Call to untyped function "_get_session" in typed context  [no-untyped-call]
+internal_toolkits/db_access.py:181: error: Cannot find implementation or library stub for module named "agent.store.orm_models"  [import-not-found]
+internal_toolkits/db_access.py:181: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+internal_toolkits/db_access.py:205: error: Returning Any from function declared to return "str"  [no-any-return]
+internal_toolkits/db_access.py:213: error: Call to untyped function "_get_session" in typed context  [no-untyped-call]
+internal_toolkits/db_access.py:230: error: Returning Any from function declared to return "str"  [no-any-return]
+internal_toolkits/db_access.py:238: error: Call to untyped function "_get_session" in typed context  [no-untyped-call]
+internal_toolkits/db_access.py:255: error: Returning Any from function declared to return "str"  [no-any-return]
+core/data/db/repository/user_preferences.py:20: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+tests/test_schema_validator.py:13: error: Function is missing a return type annotation  [no-untyped-def]
+tests/test_schema_validator.py:17: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+core/vector/pgvector/repository.py:30: error: Name "session" already defined on line 29  [no-redef]
+core/vector/pgvector/repository.py:49: error: Name "session" already defined on line 48  [no-redef]
+core/data/db/repository/toolkit_repository.py:24: error: Name "session" already defined on line 23  [no-redef]
+core/data/db/repository/toolkit_repository.py:33: error: Name "session" already defined on line 32  [no-redef]
+core/data/db/repository/toolkit_repository.py:42: error: Name "session" already defined on line 41  [no-redef]
+core/data/db/repository/toolkit_repository.py:53: error: Name "session" already defined on line 52  [no-redef]
+core/data/db/repository/toolkit_repository.py:61: error: Name "session" already defined on line 60  [no-redef]
+core/data/db/repository/toolkit_repository.py:73: error: Name "session" already defined on line 72  [no-redef]
+core/data/db/repository/toolkit_repository.py:88: error: Argument "public_api" to "ToolkitModule" has incompatible type "dict[str, Any] | list[Never]"; expected "list[dict[str, str]]"  [arg-type]
+core/data/db/repository/toolkit_repository.py:89: error: Argument "dependencies" to "ToolkitModule" has incompatible type "dict[str, Any] | list[Never]"; expected "list[str]"  [arg-type]
+helpers/privacy/base_approval.py:62: error: Missing type parameters for generic type "dict"  [type-arg]
+core/container/subprocess_runner.py:144: error: Name "logger" is not defined  [name-defined]
+core/data/db/repository/skill_repository.py:25: error: Name "session" already defined on line 24  [no-redef]
+core/data/db/repository/skill_repository.py:34: error: Name "session" already defined on line 33  [no-redef]
+core/data/db/repository/skill_repository.py:43: error: Name "session" already defined on line 42  [no-redef]
+core/data/db/repository/skill_repository.py:54: error: Name "session" already defined on line 53  [no-redef]
+core/data/db/repository/skill_repository.py:76: error: Name "session" already defined on line 75  [no-redef]
+core/data/db/repository/skill_repository.py:90: error: Argument "tags" to "Skill" has incompatible type "dict[str, Any] | list[Never]"; expected "list[str]"  [arg-type]
+core/data/db/repository/skill_repository.py:91: error: Argument after ** must be a mapping, not "str"  [arg-type]
+core/data/db/repository/skill_repository.py:92: error: Argument after ** must be a mapping, not "str"  [arg-type]
+tests/conftest.py:25: error: Signature of "send" incompatible with supertype "helpers.llm.base_client.AbstractLLMClient"  [override]
+tests/conftest.py:25: note:      Superclass:
+tests/conftest.py:25: note:          def send(self, prompt: str, system_instruction: str = ..., model: str | None = ..., usage_type: str = ..., temperature: float = ..., max_output_tokens: int = ..., thinking_budget: int | None = ..., response_schema: type[BaseModel] | None = ..., force_json: bool = ...) -> LLMResponse
+tests/conftest.py:25: note:      Subclass:
+tests/conftest.py:25: note:          def send(self, prompt: str, **kwargs: Any) -> LLMResponse
+tests/conftest.py:81: error: Signature of "seek_clarification" incompatible with supertype "helpers.privacy.base_approval.AbstractApprovalGate"  [override]
+tests/conftest.py:81: note:      Superclass:
+tests/conftest.py:81: note:          def seek_clarification(self, question: str, context: dict[Any, Any] | None = ...) -> str
+tests/conftest.py:81: note:      Subclass:
+tests/conftest.py:81: note:          def seek_clarification(self, question: str, context: dict[str, str]) -> str | None
+seeds/seed_loader.py:70: error: Unused "type: ignore" comment  [unused-ignore]
+seeds/seed_loader.py:70: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+seeds/seed_loader.py:70: note: Error code "attr-defined" not covered by "type: ignore" comment
+seeds/seed_loader.py:71: error: Unused "type: ignore" comment  [unused-ignore]
+seeds/seed_loader.py:71: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+seeds/seed_loader.py:71: note: Error code "attr-defined" not covered by "type: ignore" comment
+helpers/privacy/cli_approval.py:84: error: Missing type parameters for generic type "dict"  [type-arg]
+core/data/db/repository/task_mapper.py:49: error: Missing type parameters for generic type "dict"  [type-arg]
+core/data/db/repository/task_mapper.py:68: error: Returning Any from function declared to return "list[Any]"  [no-any-return]
+core/data/db/repository/task_mapper.py:82: error: Returning Any from function declared to return "list[Any]"  [no-any-return]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "str"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "Literal[TaskType.PYTHON]"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "list[TypedIOField]"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "list[Precondition]"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "list[str]"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "RiskLevel"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "int"  [arg-type]
+core/data/db/repository/task_mapper.py:104: error: Argument 1 to "PythonTask" has incompatible type "**dict[str, object]"; expected "datetime"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "str"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "Literal[TaskType.LLM]"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "list[TypedIOField]"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "list[Precondition]"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "list[str]"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "RiskLevel"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "int"  [arg-type]
+core/data/db/repository/task_mapper.py:110: error: Argument 1 to "LLMTask" has incompatible type "**dict[str, object]"; expected "datetime"  [arg-type]
+helpers/llm/gemini_client.py:47: error: Unused "type: ignore" comment  [unused-ignore]
+registry/skill_registry.py:36: error: Argument "key" to "sorted" has incompatible type "Callable[[dict[str, object]], object]"; expected "Callable[[dict[str, object]], SupportsDunderLT[Any] | SupportsDunderGT[Any]]"  [arg-type]
+registry/skill_registry.py:36: note: Error code "arg-type" not covered by "type: ignore" comment
+helpers/executor/dag_executor.py:96: error: Returning Any from function declared to return "AbstractTask"  [no-any-return]
+core/data/db/repository/task_repository.py:27: error: Name "session" already defined on line 26  [no-redef]
+core/data/db/repository/task_repository.py:36: error: Name "session" already defined on line 35  [no-redef]
+core/data/db/repository/task_repository.py:45: error: Name "session" already defined on line 44  [no-redef]
+core/data/db/repository/task_repository.py:56: error: Name "session" already defined on line 55  [no-redef]
+core/data/db/repository/task_repository.py:90: error: Name "session" already defined on line 89  [no-redef]
+tests/test_dag_executor.py:9: error: Module "helpers.executor.dag_executor" does not explicitly export attribute "ApprovalDeniedError"  [attr-defined]
+api/handlers/feedback_handler.py:49: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+api/handlers/feedback_handler.py:110: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+api/handlers/feedback_handler.py:134: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+agent.py:37: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+helpers/privacy/spacy_scrubber.py:44: error: Unused "type: ignore" comment  [unused-ignore]
+helpers/privacy/spacy_scrubber.py:49: error: Incompatible types in assignment (expression has type "None", variable has type "Language")  [assignment]
+main.py:11: error: Unused "type: ignore" comment  [unused-ignore]
+tests/test_integration.py:105: error: Signature of "send" incompatible with supertype "helpers.llm.base_client.AbstractLLMClient"  [override]
+tests/test_integration.py:105: note:      Superclass:
+tests/test_integration.py:105: note:          def send(self, prompt: str, system_instruction: str = ..., model: str | None = ..., usage_type: str = ..., temperature: float = ..., max_output_tokens: int = ..., thinking_budget: int | None = ..., response_schema: type[BaseModel] | None = ..., force_json: bool = ...) -> LLMResponse
+tests/test_integration.py:105: note:      Subclass:
+tests/test_integration.py:105: note:          def send(self, prompt: str, system_instruction: str = ..., model: str | None = ..., usage_type: str = ..., temperature: float = ..., max_output_tokens: int = ..., thinking_budget: int | None = ..., response_schema: type | None = ..., **kwargs: Any) -> LLMResponse
+scripts/e2e_feedback.py:25: error: Function is missing a type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:25: error: Signature of "seek_clarification" incompatible with supertype "helpers.privacy.cli_approval.CLIApprovalGate"  [override]
+scripts/e2e_feedback.py:25: note:      Superclass:
+scripts/e2e_feedback.py:25: note:          def seek_clarification(self, question: str, context: dict[Any, Any] | None = ...) -> str
+scripts/e2e_feedback.py:25: note:      Subclass:
+scripts/e2e_feedback.py:25: note:          def seek_clarification(self, q: Any, c: Any) -> Any
+scripts/e2e_feedback.py:25: error: Signature of "seek_clarification" incompatible with supertype "helpers.privacy.base_approval.AbstractApprovalGate"  [override]
+scripts/e2e_feedback.py:25: note:      Superclass:
+scripts/e2e_feedback.py:25: note:          def seek_clarification(self, question: str, context: dict[Any, Any] | None = ...) -> str
+scripts/e2e_feedback.py:25: note:      Subclass:
+scripts/e2e_feedback.py:25: note:          def seek_clarification(self, q: Any, c: Any) -> Any
+scripts/e2e_feedback.py:26: error: Function is missing a type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:27: error: Function is missing a type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:28: error: Function is missing a type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:29: error: Function is missing a type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:31: error: Function is missing a return type annotation  [no-untyped-def]
+scripts/e2e_feedback.py:31: note: Use "-> None" if function does not return a value
+scripts/e2e_feedback.py:64: error: Call to untyped function "run" in typed context  [no-untyped-call]
+scripts/e2e_run.py:15: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+scripts/e2e_run.py:18: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+scripts/e2e_run.py:22: error: Missing type parameters for generic type "dict"  [type-arg]
+scripts/e2e_run.py:28: error: Function is missing a return type annotation  [no-untyped-def]
+scripts/e2e_run.py:28: note: Use "-> None" if function does not return a value
+scripts/e2e_run.py:86: error: Call to untyped function "run_e2e" in typed context  [no-untyped-call]
+Found 97 errors in 28 files (checked 88 source files)

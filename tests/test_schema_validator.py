@@ -2,12 +2,20 @@
 
 import pytest
 
-from agent.schemas.validator import SchemaValidator
+from helpers.schemas.validator import SchemaValidator
 
+
+from resources.schemas import __file__ as schemas_init
+from core.data.fs.repository.schema_repository import SchemaRepository
+
+# Helper to provide a real schema repository pointing to the resources/schemas dir
+@pytest.fixture
+def schema_repo():
+    return SchemaRepository()
 
 @pytest.fixture
-def validator() -> SchemaValidator:
-    return SchemaValidator()
+def validator(schema_repo) -> SchemaValidator:
+    return SchemaValidator(schema_repo)
 
 
 class TestTaskSchemaValidation:

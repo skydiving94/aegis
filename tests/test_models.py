@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from agent.models.enums import (
+from models.enums import (
     DataPolicy,
     ExecutionStatus,
     IOType,
@@ -10,16 +10,16 @@ from agent.models.enums import (
     RiskLevel,
     TaskType,
 )
-from agent.models.io_types import Precondition, TypedIOField
-from agent.models.edge import Edge
-from agent.models.skill import Skill, SkillNode
-from agent.models.task import (
+from models.io_types import Precondition, TypedIOField
+from models.edge import Edge
+from models.skill import Skill, SkillNode
+from models.task import (
     ExecutionContext,
     LLMTask,
     PythonTask,
     TaskResult,
 )
-from agent.models.toolkit import ToolkitModule
+from models.toolkit import ToolkitModule
 
 
 class TestEnums:
