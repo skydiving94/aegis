@@ -121,6 +121,10 @@ async def run_repl(agent: Agent) -> None:
         if not user_input.strip():
             continue
 
+        if user_input.strip().lower() == "/context":
+            agent.show_recent_context()
+            continue
+
         try:
             await agent.run(user_input)
         except Exception as e:

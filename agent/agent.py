@@ -57,7 +57,7 @@ class Agent:
         self._config = config or {}
         self._pref_repo = pref_repo
         self._initialized = False
-        self._last_execution: dict[str, Any] | None = None
+        self._execution_history: list[dict[str, Any]] = []
 
     async def initialize(self) -> None:
         """Register internal toolkits, seed tasks, and seed skills.
@@ -179,7 +179,7 @@ class Agent:
 
         # Branch based on intent type
         intent_type = intent_result.get("intent_type", "NEW_GOAL")
-        if intent_type == "FEEDBACK" and self._last_execution:
+        if intent_type == "FEEDBACK" and self._execution_history:
             console.print("[bold magenta]🔧 Refining previous skill based on feedback...[/bold magenta]")
             return await self._refine_skill(intent_result, context)
 
@@ -213,25 +213,28 @@ class Agent:
         await self._persist_objective(user_input, plan, results)
 
         # Save state for potential future refinement
-        self._last_execution = {
+        self._execution_history.append({
             "plan": plan,
             "initial_payload": initial_payload,
             "results": results
-        }
+        })
+        if len(self._execution_history) > 10:
+            self._execution_history.pop(0)
 
         return results
 
     async def _refine_skill(self, intent_result: dict[str, Any], context: ExecutionContext) -> dict[str, Any]:
         """Refine a previously executed skill based on user feedback."""
-        if not self._last_execution:
+        if not self._execution_history:
             logger.warning("No previous execution state to refine.")
             return {}
             
-        plan = self._last_execution.get("plan", {})
+        last_execution = self._execution_history[-1]
+        plan = last_execution.get("plan", {})
         skill_ids = plan.get("skill_ids", [])
         if not skill_ids:
             logger.warning("No skill IDs in last execution to refine.")
-            return self._last_execution.get("results", {})
+            return last_execution.get("results", {})
             
         target_skill_id = skill_ids[-1]  # Refine the last executed skill (typically the main one)
         
@@ -292,7 +295,7 @@ class Agent:
             "feedback": feedback,
             "last_skill_id": target_skill_id,
             "last_skill_definition": last_skill_definition,
-            "last_execution_results": self._last_execution.get("results", {})
+            "last_execution_results": last_execution.get("results", {})
         }
         
         refine_result = await self._executor.execute_skill(refine_skill, context, refine_payload)
@@ -301,12 +304,12 @@ class Agent:
         new_skill_id = refine_result.get("skill_id")
         if not new_skill_id:
             logger.error("refine_skill did not return a new skill_id!")
-            return self._last_execution.get("results", {})
+            return last_execution.get("results", {})
             
         console.print(f"[bold green]✨ Refined skill built: {new_skill_id}[/bold green]")
         
         # 4. Execute the new skill using the initial payload from the last run
-        initial_payload = self._last_execution.get("initial_payload", {})
+        initial_payload = last_execution.get("initial_payload", {})
         # Note: we might want to preserve the new feedback for the skill if it uses 'user_input'
         if "user_input" in intent_result:
             initial_payload["user_input"] = intent_result["user_input"]
@@ -319,11 +322,13 @@ class Agent:
         self._present_results(results)
         await self._persist_objective(intent_result.get("user_input", "Feedback"), plan, results)
         
-        self._last_execution = {
+        self._execution_history.append({
             "plan": plan,
             "initial_payload": initial_payload,
             "results": results
-        }
+        })
+        if len(self._execution_history) > 10:
+            self._execution_history.pop(0)
         
         return results
 
@@ -533,12 +538,23 @@ class Agent:
     def _present_results(self, results: dict[str, Any]) -> None:
         """Format and display results via rich."""
         console.print("\n[bold green]✅ Results:[/bold green]")
+        
+        hidden_keys = {
+            "user_input", "goal", "entities", "constraints", "domain",
+            "past_objectives", "file_paths", "sub_objectives",
+            "plan", "build_items", "skill_ids", "execution_plan",
+            "intent_type", "clarifications", "user_preferences"
+        }
+        
+        # Hide individual clarification questions from the results
+        clarifications = results.get("clarifications", {})
+        if isinstance(clarifications, dict):
+            hidden_keys.update(clarifications.keys())
+
         # Filter out internal keys like user_input, goal, entities etc.
         display_results = {
             k: v for k, v in results.items()
-            if k not in ("user_input", "goal", "entities", "constraints", "domain",
-                         "past_objectives", "file_paths", "sub_objectives",
-                         "plan", "build_items", "skill_ids", "execution_plan")
+            if k not in hidden_keys
         }
         if not display_results:
             console.print("[dim]No results produced.[/dim]")
@@ -552,6 +568,42 @@ class Agent:
             table.add_row(str(key), str(value)[:200])
 
         console.print(table)
+
+    def show_recent_context(self, limit: int = 10) -> None:
+        """Display the recent execution context (hidden inputs/outputs) to the user."""
+        if not self._execution_history:
+            console.print("[dim]No recent context available.[/dim]")
+            return
+
+        console.print(f"\n[bold cyan]📖 Recent Context (last {min(limit, len(self._execution_history))} runs)[/bold cyan]")
+        
+        history_to_show = self._execution_history[-limit:]
+        
+        for i, execution in enumerate(reversed(history_to_show), 1):
+            results = execution.get("results", {})
+            
+            # Extract internal keys we normally hide
+            context_keys = {"intent_type", "clarifications", "user_preferences"}
+            clarifications = results.get("clarifications", {})
+            if isinstance(clarifications, dict):
+                context_keys.update(clarifications.keys())
+                
+            display_context = {
+                k: v for k, v in results.items() 
+                if k in context_keys
+            }
+            
+            if not display_context:
+                continue
+
+            table = Table(show_header=True, header_style="bold magenta", title=f"Run -{i}")
+            table.add_column("Key", style="cyan")
+            table.add_column("Value", style="white")
+
+            for key, value in display_context.items():
+                table.add_row(str(key), str(value)[:200])
+
+            console.print(table)
 
     async def _persist_objective(
         self,

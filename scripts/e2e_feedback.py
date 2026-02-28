@@ -36,7 +36,7 @@ async def run():
         executor=DAGExecutor(TaskRepository(sf), ToolkitRegistry(ToolkitRepository(sf))),
         skill_registry=SkillRegistry(SkillRepository(sf)),
         toolkit_registry=ToolkitRegistry(ToolkitRepository(sf)),
-        llm_client=GeminiClient(api_key=os.environ['GEMINI_API_KEY'], model_config={"model_name": "PLACEHOLDER_M37"}),
+        llm_client=GeminiClient(api_key=os.environ['GEMINI_API_KEY'], model_config={"model_name": "gemini-2.5-flash"}),
         sandbox=SubprocessRunner(toolkit_registry=ToolkitRegistry(ToolkitRepository(sf)), approved_paths=['/']),
         approval_gate=AutoGate(),
         scrubber=SpaCyNERScrubber(),
